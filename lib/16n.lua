@@ -43,7 +43,7 @@ _16n.parse_sysex_config_dump = function(sysex_payload)
     rot = true
   end
 
-  -- NB: these seem to be wrongly reported...
+  -- NB: these are low-level raw values
   raw_min_v = (sysex_payload[i+5] << 8) + sysex_payload[i+4]
   raw_max_v = (sysex_payload[i+7] << 8) + sysex_payload[i+6]
 
