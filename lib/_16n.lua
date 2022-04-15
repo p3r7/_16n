@@ -73,6 +73,7 @@ _16n.parse_sysex_config_dump = function(sysex_payload)
     trs_ch = trs_ch_list,
     usb_cc = usb_cc_list,
     trs_cc = trs_cc_list,
+    init_values = {}, -- NB: get populated in a 2nd time as values get dumped via CC messages
   }
 end
 
@@ -84,7 +85,6 @@ local dev_16n=nil
 local midi_16n=nil
 local conf_16n=nil
 
-
 _16n.init = function(cc_cb_fn)
   for _,dev in pairs(midi.devices) do
     if dev.name~=nil and dev.name == "16n" then
@@ -94,6 +94,7 @@ _16n.init = function(cc_cb_fn)
       midi_16n = midi.connect(dev.port)
 
       local is_sysex_dump_on = false
+      local is_init_cc_dump_on = false
       local sysex_payload = {}
 
       midi_16n.event=function(data)
@@ -104,9 +105,9 @@ _16n.init = function(cc_cb_fn)
             table.insert(sysex_payload, b)
             if b == 0xf7 then
               is_sysex_dump_on = false
+              is_init_cc_dump_on = true
               if _16n.is_sysex_config_dump(sysex_payload) then
                 conf_16n = _16n.parse_sysex_config_dump(sysex_payload)
-                print("done retrieving 16n config")
               end
             end
           end
@@ -117,8 +118,17 @@ _16n.init = function(cc_cb_fn)
             table.insert(sysex_payload, b)
           end
         elseif d.type == 'cc' and conf_16n ~= nil then
-          if cc_cb_fn ~= nil then
-            cc_cb_fn(d)
+          if is_init_cc_dump_on then
+            local slider_id = _16n.cc_2_slider_id(d.cc)
+            conf_16n.init_values[slider_id] = d.val
+            if slider_id == 16 then
+              is_init_cc_dump_on = false
+              print("done retrieving 16n config")
+            end
+          else
+            if cc_cb_fn ~= nil then
+              cc_cb_fn(d)
+            end
           end
         end
       end
@@ -162,6 +172,16 @@ end
 _16n.max_v = function()
   mustHaveConf()
   return conf_16n.max_v
+end
+
+_16n.init_val = function(slider_id)
+  mustHaveConf()
+  return conf_16n.init_values[slider_id]
+end
+
+_16n.init_vals = function(slider_id)
+  mustHaveConf()
+  return conf_16n.init_values
 end
 
 

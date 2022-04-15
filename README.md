@@ -8,7 +8,7 @@ automatically retrieves a plugged 16n configuration at init (via sysex) and bind
 ## example usage
 
 ```lua
-_16n = include "sines/lib/16n"
+_16n = include("lib/_16n")
 
 function init()
   _16n.init(_16n_slider_callback)
